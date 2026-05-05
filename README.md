@@ -47,8 +47,8 @@ See `docker-compose.yaml` for complete list of configurable options.
 
 ## 📂 Volumes
 
-- `./rootfs/config/overseerr` - Data storage
-- `./rootfs/data/overseerr` - Data storage
+- `./volumes/config/overseerr` - Data storage
+- `./volumes/data/overseerr` - Data storage
 
 ## 🔍 Logging
 
