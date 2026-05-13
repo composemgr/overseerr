@@ -1,5 +1,6 @@
 # nginx proxy address - http://172.17.0.1:5055
 
+name: overseerr
 x-logging: &default-logging
   driver: json-file
   options:
@@ -9,22 +10,21 @@ x-logging: &default-logging
 services:
   overseerr:
     image: sctx/overseerr:latest
+    pull_policy: always
     container_name: overseerr-app
-    restart: unless-stopped
+    restart: always
     logging: *default-logging
     networks:
       - overseerr
     ports:
-      - "5055:5055"
+      - "172.17.0.1:5055:5055"
     environment:
       TZ: ${TZ:-America/New_York}
-      PUID: ${SERVICE_USER:-1000}
-      PGID: ${SERVICE_GROUP:-1000}
+      LOG_LEVEL: info
     volumes:
-      - ./volumes/config/overseerr:/config
-      - ./volumes/data/overseerr:/data
+      - ./volumes/config/overseerr:/app/config
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5055"]
+      test: ["CMD", "curl", "-f", "http://localhost:5055/api/v1/status"]
       interval: 30s
       timeout: 10s
       retries: 3
