@@ -16,11 +16,15 @@ services:
     logging: *default-logging
     networks:
       - overseerr
+      - proxy
+      - cloudflare
     ports:
       - "172.17.0.1:5055:5055"
     environment:
       TZ: ${TZ:-America/New_York}
       LOG_LEVEL: info
+      CONTAINER_NAME: overseerr-app
+      HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}
     volumes:
       - ./volumes/config/overseerr:/app/config
     healthcheck:
@@ -28,7 +32,27 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    labels:
+      - 'traefik.enable=true'
+      - 'cloudflare.enable=true'
+      - 'traefik.docker.network=proxy'
+      - 'cloudflare.service=http://overseerr-app:5055'
+      - 'cloudflare.hostname=overseerr.${CLOUDFLARE_ZONE_NAME:-}'
+      - 'traefik.http.routers.overseerr-app.entrypoints=http'
+      - 'traefik.http.routers.overseerr-app-secure.tls=true'
+      - 'traefik.http.routers.overseerr-app.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
+      - 'traefik.http.middlewares.overseerr-app-https-redirect.redirectscheme.scheme=https'
+      - 'traefik.http.routers.overseerr-app.middlewares=overseerr-app-https-redirect'
+      - 'traefik.http.routers.overseerr-app-secure.entrypoints=https'
+      - 'traefik.http.routers.overseerr-app-secure.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
+      - 'traefik.http.routers.overseerr-app-secure.tls.certresolver=cloudflare'
+      - 'traefik.http.routers.overseerr-app-secure.service=overseerr-app'
+      - 'traefik.http.services.overseerr-app.loadbalancer.server.port=5055'
 
 networks:
   overseerr:
     external: false
+  proxy:
+    external: true
+  cloudflare:
+    external: true
